@@ -7,9 +7,9 @@ import os
 TYPE, ORDER = range(2)
 
 # Налаштування
-TOKEN = os.getenv("TOKEN")  # беремо токен з Environment Variables
+TOKEN = os.getenv("TOKEN")  # токен бота з Environment Variables
 ADMIN_USERNAME = "Yuliya26_01"
-ADMIN_CHAT_ID = None  # визначимо за username після старту
+ADMIN_CHAT_ID = None
 
 # Вітання
 WELCOME_TEXT = """Привіт 👋 Я твій помічник у світі студентських робіт!
@@ -19,17 +19,17 @@ WELCOME_TEXT = """Привіт 👋 Я твій помічник у світі �
 
 # Вид роботи і ціни
 WORKS = {
-    "Щоденник практики": "📘 Щоденник практики\n- Стандартний (10–20 днів) — 700–1000 грн, 1–2 дні\n- Розширений — 1200–1800 грн, 2–3 дні\n- Під ключ — 2000–3500 грн, 2–4 дні",
-    "Звіт практики": "📊 Звіт практики — 1000–2500 грн, 2–3 дні",
-    "Реферат": "📄 Реферат (5–10 сторінок) — 250–400 грн, 1 день",
-    "Диплом": "🎓 Дипломна — 4000–8000 грн, 10–20 днів\nПід ключ — 9000–12000 грн, 10–25 днів",
-    "Есе": "📄 Есе — 200–300 грн, 1 день\nЕсе англійською — 300–500 грн, 1–2 дні",
-    "Курсова": "🎓 Курсова — 1500–3000 грн, 5–7 днів",
+    "Щоденник практики": "📘 Щоденник практики\n- Стандартний — 700–1000 грн\n- Розширений — 1200–1800 грн",
+    "Звіт практики": "📊 Звіт практики — 1000–2500 грн",
+    "Реферат": "📄 Реферат — 250–400 грн",
+    "Диплом": "🎓 Дипломна — 4000–8000 грн",
+    "Есе": "📄 Есе — 200–500 грн",
+    "Курсова": "🎓 Курсова — 1500–3000 грн",
     "ДСТУ": "📊 Оформлення за ДСТУ — 100–300 грн",
     "Інше": "Введіть будь-яку роботу вручну"
 }
 
-# Функція для перевірки формату картинки (замінює imghdr)
+# Функція для перевірки формату картинки через Pillow
 def get_image_type(file_path):
     with Image.open(file_path) as img:
         return img.format.lower()  # 'jpeg', 'png' і т.д.
@@ -86,20 +86,6 @@ def order_details(update: Update, context: CallbackContext):
         )
         context.bot.send_message(chat_id=ADMIN_CHAT_ID, text=summary, parse_mode='Markdown')
         update.message.reply_text("Дякуємо! Ваше замовлення прийнято і передане менеджеру. Скоро з вами зв'яжуться.")
-        
-        if 'orders' not in context.bot_data:
-            context.bot_data['orders'] = {}
-        order_id = len(context.bot_data['orders']) + 1
-        context.bot_data['orders'][order_id] = {
-            'user_id': update.effective_user.id,
-            'type': context.user_data['type'],
-            'deadline': context.user_data['deadline'],
-            'contact': context.user_data['contact']
-        }
-        context.bot.send_message(
-            chat_id=ADMIN_CHAT_ID,
-            text=f"Щоб відповісти клієнту, надішліть в цей чат команду:\n/reply {order_id} Текст повідомлення"
-        )
         return ConversationHandler.END
 
 # Скасування
@@ -107,28 +93,7 @@ def cancel(update: Update, context: CallbackContext):
     update.message.reply_text("Скасовано.", reply_markup=ReplyKeyboardRemove())
     return ConversationHandler.END
 
-# Команда для адміна /reply
-def admin_reply(update: Update, context: CallbackContext):
-    if update.effective_chat.id != ADMIN_CHAT_ID:
-        update.message.reply_text("Цю команду можна використовувати тільки адміну.")
-        return
-    args = context.args
-    if len(args) < 2:
-        update.message.reply_text("Використання: /reply <order_id> <повідомлення>")
-        return
-    try:
-        order_id = int(args[0])
-    except:
-        update.message.reply_text("Невірний order_id.")
-        return
-    if order_id not in context.bot_data.get('orders', {}):
-        update.message.reply_text("Order_id не знайдено.")
-        return
-    text = ' '.join(args[1:])
-    user_id = context.bot_data['orders'][order_id]['user_id']
-    context.bot.send_message(chat_id=user_id, text=f"Повідомлення від менеджера:\n\n{text}")
-    update.message.reply_text("Повідомлення надіслано клієнту.")
-
+# Основна функція
 def main():
     updater = Updater(TOKEN, use_context=True)
     dp = updater.dispatcher
@@ -145,8 +110,7 @@ def main():
     dp.add_handler(conv)
     dp.add_handler(CommandHandler('start', start))
     dp.add_handler(CommandHandler('prices', prices))
-    dp.add_handler(CommandHandler('reply', admin_reply))
-    dp.add_handler(CommandHandler('help', lambda u, c: u.message.reply_text("Використовуй меню або /start, /prices, /reply")))
+    dp.add_handler(CommandHandler('help', lambda u, c: u.message.reply_text("Використовуй меню або /start, /prices")))
 
     updater.start_polling()
     updater.idle()
