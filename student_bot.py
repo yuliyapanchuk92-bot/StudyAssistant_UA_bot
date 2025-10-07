@@ -1,12 +1,13 @@
 from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler, CallbackContext, CallbackQueryHandler
+from PIL import Image
 import os
 
 # Стані для збору замовлення
 TYPE, ORDER = range(2)
 
 # Налаштування
-TOKEN = os.getenv("BOT_TOKEN")  # береться з Environment Variable
+TOKEN = os.getenv("TOKEN")  # беремо токен з Environment Variables
 ADMIN_USERNAME = "Yuliya26_01"
 ADMIN_CHAT_ID = None  # визначимо за username після старту
 
@@ -28,14 +29,21 @@ WORKS = {
     "Інше": "Введіть будь-яку роботу вручну"
 }
 
+# Функція для перевірки формату картинки (замінює imghdr)
+def get_image_type(file_path):
+    with Image.open(file_path) as img:
+        return img.format.lower()  # 'jpeg', 'png' і т.д.
+
 # Старт бота
 def start(update: Update, context: CallbackContext):
     global ADMIN_CHAT_ID
     if ADMIN_CHAT_ID is None:
         ADMIN_CHAT_ID = update.effective_user.id
     keyboard = [[work] for work in WORKS.keys()]
-    update.message.reply_text(WELCOME_TEXT,
-                              reply_markup=ReplyKeyboardMarkup(keyboard, one_time_keyboard=True, resize_keyboard=True))
+    update.message.reply_text(
+        WELCOME_TEXT,
+        reply_markup=ReplyKeyboardMarkup(keyboard, one_time_keyboard=True, resize_keyboard=True)
+    )
 
 # Команда /prices
 def prices(update: Update, context: CallbackContext):
@@ -78,6 +86,7 @@ def order_details(update: Update, context: CallbackContext):
         )
         context.bot.send_message(chat_id=ADMIN_CHAT_ID, text=summary, parse_mode='Markdown')
         update.message.reply_text("Дякуємо! Ваше замовлення прийнято і передане менеджеру. Скоро з вами зв'яжуться.")
+        
         if 'orders' not in context.bot_data:
             context.bot_data['orders'] = {}
         order_id = len(context.bot_data['orders']) + 1
@@ -144,3 +153,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
