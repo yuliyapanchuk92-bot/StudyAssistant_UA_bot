@@ -10,7 +10,10 @@ import os
 TYPE, ORDER = range(2)
 
 # Налаштування
-TOKEN = os.getenv("TOKEN")  # токен бота з Environment Variables
+TOKEN = os.getenv("TOKEN")
+if not TOKEN:
+    raise ValueError("Environment variable TOKEN не встановлено!")
+
 ADMIN_USERNAME = "Yuliya26_01"
 ADMIN_CHAT_ID = None
 
@@ -33,9 +36,12 @@ WORKS = {
 }
 
 # Функція для перевірки формату картинки через Pillow
-def get_image_type(file_path):
-    with Image.open(file_path) as img:
-        return img.format.lower()  # 'jpeg', 'png' і т.д.
+def get_image_type(file_path: str) -> str:
+    try:
+        with Image.open(file_path) as img:
+            return img.format.lower()  # 'jpeg', 'png' і т.д.
+    except Exception:
+        return "unknown"
 
 # Старт бота
 def start(update: Update, context: CallbackContext):
