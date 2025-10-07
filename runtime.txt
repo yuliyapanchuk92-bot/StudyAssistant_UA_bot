@@ -1,4 +1,1 @@
 python-3.12.7
-git add .
-git commit -m "Trigger new deploy with correct runtime.txt"
-git push
