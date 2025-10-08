@@ -4,3 +4,4 @@ requests
 certifi
 urllib3
 python-dotenv
+filetype
