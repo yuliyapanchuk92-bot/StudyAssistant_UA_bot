@@ -1,9 +1,24 @@
 import sys
 print("Python version:", sys.version)
 
-from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler, CallbackContext, CallbackQueryHandler
+from telegram import (
+    Update,
+    ReplyKeyboardMarkup,
+    ReplyKeyboardRemove,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup
+)
+from telegram.ext import (
+    Updater,
+    CommandHandler,
+    MessageHandler,
+    Filters,
+    ConversationHandler,
+    CallbackContext,
+    CallbackQueryHandler
+)
 from PIL import Image
+import filetype
 import os
 
 # Стані для збору замовлення
@@ -35,13 +50,12 @@ WORKS = {
     "Інше": "Введіть будь-яку роботу вручну"
 }
 
-# Функція для перевірки формату картинки через Pillow
-def get_image_type(file_path: str) -> str:
-    try:
-        with Image.open(file_path) as img:
-            return img.format.lower()  # 'jpeg', 'png' і т.д.
-    except Exception:
+# Функція для перевірки типу файлу через filetype
+def get_file_type(file_path: str) -> str:
+    kind = filetype.guess(file_path)
+    if kind is None:
         return "unknown"
+    return kind.extension  # 'jpg', 'png', 'gif' і т.д.
 
 # Старт бота
 def start(update: Update, context: CallbackContext):
